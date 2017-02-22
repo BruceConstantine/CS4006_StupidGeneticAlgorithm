@@ -189,6 +189,10 @@ class Algo{
 		return true;
 	}
 	
+	public static int random(int rangeBound ){
+		return (int)( Math.random() * rangeBound ) + 1;
+	}
+	
 	public static int [] generate_AStuTimeTable(int C_inCourseModules, int M_TotalModules){
 		return null;
 	}
