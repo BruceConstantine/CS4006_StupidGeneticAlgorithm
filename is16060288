@@ -1,6 +1,9 @@
 import java.util.HashSet;
 import java.util.Scanner;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 
 /*import java.io.BufferedOutputStream;
@@ -18,7 +21,21 @@ public class is16060288{
 							ParameterGetter.get_C() 
 							)
 							.outFile("AI17.txt"); 
+
+
 		///JUST A TEST CLASS AND GO..
+		
+		//The following is Just used for TESTING.
+		try {
+			System.out.println();
+			Scanner reader = new Scanner(new File("AI17.txt"));
+			while( reader.hasNext()){
+				System.out.println( reader.nextLine() ); 
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 }
@@ -105,12 +122,13 @@ class GenerateData{
 		else
 			D_ExamDays = M_TotalModules/2 + 1;
 		//### END
-		
+
 		generate_StuTimetable();
+
+		//System.out.println("12321231232131231231321");
 		
 		//### Low Cohesion... HERE
 		generate_ExamTimetable(2);
-		
 		costFxResult_Arr = Fx_fitness.calculate(costFxResult_Arr, StuTimetable, ExamTimetable);
 	}
 	
@@ -139,23 +157,27 @@ class GenerateData{
 			//*** Exam Timetable Output ***
 			for(int ord_index = 1; ord_index <= P_PopulationSize ; ord_index++){
 				
-				out.print("Ord "+ ord_index +":");
+				out.print("Ord "+ ord_index +":\t");
 				
 				for(int sessionPart = 0; sessionPart < 2 ; sessionPart ++){
 				
 					for(int module_index = 1 ; module_index <= D_ExamDays; module_index++){
 						out.print( " m" + ExamTimetable[ord_index - 1][sessionPart][module_index - 1] );
 					}
-
-					out.println();
+					if(sessionPart == 0) {
+						out.println();
+						out.print("\t");
+					}
+					
 				}
 
 				out.println(" : cost: " + costFxResult_Arr[ord_index - 1]);
 			}
 			
 			//***END output
-			
 			out.close();
+			System.out.print("File Successfully output.");
+			
 		}
 		catch(Exception e){
 			e.printStackTrace();
@@ -165,9 +187,17 @@ class GenerateData{
 	
 	private /*public*/ void generate_StuTimetable(){
 		StuTimetable = new int[S_StudentNum][C_inCourseModules];
+		
+		/*** TODO: Delete This Output!
+		 * */System.out.println("\n\n\n\n\n"+StuTimetable[0][0]+"\n\n\n\n");
+		
 		for(int [] AstudentTimetable : StuTimetable){
-			AstudentTimetable = Algo.generate_AStuTimeTable( C_inCourseModules, M_TotalModules ) ;
+			AstudentTimetable = Algo.generate_AStuTimeTable(new int[ C_inCourseModules ],  C_inCourseModules, M_TotalModules ) ;
 		}
+		
+		/*** TODO: Delete This Output!
+		 * */System.out.println("\n\n\n\n\n"+StuTimetable[0][0]+"\n\n\n\n");
+		
 	}
 	
 	private /*public*/ void generate_ExamTimetable(int numOfSessionEachDay){
@@ -216,18 +246,31 @@ class Algo{
 	public static boolean HasBeenGenerated(){
 		return true;
 	}
-
-	public static int [] generate_AStuTimeTable( int C_inCourseModules, int M_TotalModules){
+	//方法体内的数组传递回去没有值（值为0），好好看看这里发生了什么，把上面的输出注释掉.
+	public static int [] generate_AStuTimeTable(int[] AstudentTimeTable, int C_inCourseModules, int M_TotalModules){
 		HashSet<Integer> AstudentTimetable_generationSequence_Set = new HashSet<Integer>();
-		int AstudentTimeTable [] = new int[C_inCourseModules];
+		// int AstudentTimeTable [] = new int[C_inCourseModules]; // The Variable have been destroied by Gabage Collector when it meet with 'return'
 		
 		for(int i = 0; i < C_inCourseModules; i++){
 			int module = Algo.random(M_TotalModules) + 1;
+			/**
+			 * TODO : Delete
+			 * */
+			System.out.println("\n********"+module+"********");;
+			
 			while( ! AstudentTimetable_generationSequence_Set.add(module) ){ /* if There is a duplicative module in his TT, re-generate a module */
 				module = Algo.random(M_TotalModules) + 1;
+				/**
+				 * TODO : Delete
+				 * */
+				System.out.println("\n********"+module+"********");;
 			}
 			AstudentTimeTable[i] = module;
 		}
+		/**
+		 * TODO : Delete
+		 * */
+		//System.out.println("\n_____"+AstudentTimeTable[1]+"____"+AstudentTimeTable[0]+"___");
 		
 		return AstudentTimeTable;
 	}
@@ -240,12 +283,12 @@ class Algo{
 		return (int)( Math.random() * rangeBound );
 	}
 
-	public static int [] getRandomIndex(int rowNum, int colNum){
+	/*public static int [] getRandomIndex(int rowNum, int colNum){
 		int shuffleIndex_row = random(rowNum);
 		int shuffleIndex_col = random(colNum);
 		int [] res = {shuffleIndex_row, shuffleIndex_col};
 		return res;
-	}
+	}*/
 	
 	/**
 	 * @param init_Arr	: The ordered 2 dimentions array.
