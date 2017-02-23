@@ -64,14 +64,16 @@ class ParameterGetter{
 			C = Integer.parseInt( in.nextLine() );
 		}
 		catch(Exception e){	// if $#@ inputed.
-			//e.printStackTrace();
 			System.out.println("***Please Enter a positive Integer!***\n");
 			ParameterGetter.getUserInput( );		// BUG When Ctrl+C.
 		}
 		finally{
-			if( G > 0 && P > 0 && S > 0 && M > 0 && C > 0 ) {}
+			if( (G > 0 && P > 0 && S > 0 && M > 0 && C > 0 )
+				&& ( M % 2 == 0 )
+			)  {}
 			else { 
-				System.out.println("***Please Enter a positive Integer!***\n");
+				System.out.println("***Please Enter all positive Integer***\n");
+				System.out.println("***The Total number of Modules must be an EVEN***\n");
 				ParameterGetter.getUserInput(); 
 			}
 			in.close();
@@ -115,20 +117,12 @@ class GenerateData{
 		S_StudentNum		= S;
 		M_TotalModules		= M;
 		C_inCourseModules	= C;
-		
-		//### D_ExamDays!!!
-		if( M_TotalModules % 2 == 0 )
-			D_ExamDays = M_TotalModules/2;
-		else
-			D_ExamDays = M_TotalModules/2 + 1;
-		//### END
-
+		D_ExamDays 			= M_TotalModules/2;
+	
 		generate_StuTimetable();
-
-		//System.out.println("12321231232131231231321");
-		
 		//### Low Cohesion... HERE
 		generate_ExamTimetable(2);
+		
 		costFxResult_Arr = Fx_fitness.calculate(costFxResult_Arr, StuTimetable, ExamTimetable);
 	}
 	
@@ -185,40 +179,35 @@ class GenerateData{
 		//finally ?
 	}
 	
-	private /*public*/ void generate_StuTimetable(){
+	private void generate_StuTimetable(){
 		StuTimetable = new int[S_StudentNum][C_inCourseModules];
 		
-		/*** TODO: Delete This Output!
-		 * */System.out.println("\n\n\n\n\n"+StuTimetable[0][0]+"\n\n\n\n");
-		
-		for(int [] AstudentTimetable : StuTimetable){
-			AstudentTimetable = Algo.generate_AStuTimeTable(new int[ C_inCourseModules ],  C_inCourseModules, M_TotalModules ) ;
+		// Foreach machnichism cannot be used in assignment.
+		for( int i = 0; i < StuTimetable.length; i++){
+			StuTimetable[i] = Algo.generate_AStuTimeTable(new int[ C_inCourseModules ],  C_inCourseModules, M_TotalModules ) ;
 		}
-		
-		/*** TODO: Delete This Output!
-		 * */System.out.println("\n\n\n\n\n"+StuTimetable[0][0]+"\n\n\n\n");
-		
 	}
 	
-	private /*public*/ void generate_ExamTimetable(int numOfSessionEachDay){
+	private void generate_ExamTimetable(int numOfSessionEachDay){
 		ExamTimetable = new int[P_PopulationSize][numOfSessionEachDay][ D_ExamDays ];
 		int [][] template = new int[numOfSessionEachDay][D_ExamDays];
 		
 		/* * Generate ONE Exam time table template * */
-		int modulesCount = 1;
-		for(int i = 0 ; i < template.length ; i++ ){
-			for(int j = 0; j < D_ExamDays; j++){
-				template[i][j] = modulesCount++ ;
-			}
-		}
 		
 		/* * Initalize each ordering with timetable template 
 		 * & Mess the order without same sequence 
 		 * */
-		for(int[][] ordering: ExamTimetable){
-			ordering = template.clone();							// Ordering Initialization
-			ordering = Algo.shuffle_2D_Arr(ordering, D_ExamDays, numOfSessionEachDay);	// Ordering Rationalization
+		for(int i = 0 ; i < P_PopulationSize; i++){
+			//ExamTimetable[i] = template.clone();	Cannot use Array.clone() for it is just use the same address probably...
+			int modulesCount = 1;								   // Ordering Initialization
+			for(int row = 0 ; row < numOfSessionEachDay ; row++ ){
+				for(int col = 0; col < D_ExamDays; col++){
+					ExamTimetable[i][row][col] = modulesCount++ ;
+				}
+			}
+			ExamTimetable[i] = Algo.shuffle_2D_Arr(ExamTimetable[i], D_ExamDays, numOfSessionEachDay);	// Ordering Rationalization
 		}
+		 
 	}
 	
 //	public void set_costFxResult_Arr(int CostFxRes_Arr){
@@ -242,11 +231,7 @@ class Algo{
 	 * Used for storing the generated Random number sequence -- in case of duplicated ordering.
 	 */
 	private static HashSet<String> shuffleIndex_generationSequence_Set = new HashSet<String>();	
-	
-	public static boolean HasBeenGenerated(){
-		return true;
-	}
-	//方法体内的数组传递回去没有值（值为0），好好看看这里发生了什么，把上面的输出注释掉.
+		
 	public static int [] generate_AStuTimeTable(int[] AstudentTimeTable, int C_inCourseModules, int M_TotalModules){
 		HashSet<Integer> AstudentTimetable_generationSequence_Set = new HashSet<Integer>();
 		// int AstudentTimeTable [] = new int[C_inCourseModules]; // The Variable have been destroied by Gabage Collector when it meet with 'return'
@@ -267,28 +252,9 @@ class Algo{
 			}
 			AstudentTimeTable[i] = module;
 		}
-		/**
-		 * TODO : Delete
-		 * */
-		//System.out.println("\n_____"+AstudentTimeTable[1]+"____"+AstudentTimeTable[0]+"___");
-		
+			
 		return AstudentTimeTable;
 	}
-	
-	/**
-	 * @param rangeBound : The maximum range bound excluded.
-	 * @return [0, rangeBound-1]
-	 */
-	public static int random(int rangeBound){ 
-		return (int)( Math.random() * rangeBound );
-	}
-
-	/*public static int [] getRandomIndex(int rowNum, int colNum){
-		int shuffleIndex_row = random(rowNum);
-		int shuffleIndex_col = random(colNum);
-		int [] res = {shuffleIndex_row, shuffleIndex_col};
-		return res;
-	}*/
 	
 	/**
 	 * @param init_Arr	: The ordered 2 dimentions array.
@@ -324,4 +290,21 @@ class Algo{
 		}
 		else return init_Arr;
 	}
+	
+	/**
+	 * @param rangeBound : The maximum range bound excluded.
+	 * @return [0, rangeBound-1]
+	 */
+	public static int random(int rangeBound){ 
+		return (int)( Math.random() * rangeBound );
+	}
+
+	/*public static int [] getRandomIndex(int rowNum, int colNum){
+		int shuffleIndex_row = random(rowNum);
+		int shuffleIndex_col = random(colNum);
+		int [] res = {shuffleIndex_row, shuffleIndex_col};
+		return res;
+	}*/
+	
+	
 }
