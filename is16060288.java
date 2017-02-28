@@ -6,10 +6,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
  
-	// BUG IS : 
-	//	M = C+1:   Cost = {0 or S}
-
 public class is16060288{
+	
 	public static void main(String []args){
 		ParameterGetter.getUserInput();
 		new GenerateData(	ParameterGetter.get_G(),
@@ -58,22 +56,26 @@ class ParameterGetter{
 			
 			System.out.println(">>Enter The number of Modules in a Course:\t");
 			C = Integer.parseInt( in.nextLine() );
+			
+			if( 
+				(G > 0 && P > 0 && S > 0 && M > 0 && C > 0 )
+				&& ( M % 2 == 0 )
+				&& ( M >= C)
+			){}
+			else { 
+				System.out.println("***Please Notice the Following Points: ***");
+				System.out.println(">> 1. Please Enter all positive Integer.");
+				System.out.println(">> 2. The Total number of Modules must be an EVEN.");
+				System.out.println(">> 3. The Total number of Modules should always GRETER OR EQUAL to The number of Modules in a Course.\n");
+				ParameterGetter.getUserInput(); 
+			}
+			
 		}
 		catch(Exception e){	// if $#@ inputed.
 			System.out.println("***Please Enter a positive Integer!***\n");
 			ParameterGetter.getUserInput( );		// BUG When Ctrl+C.
 		}
 		finally{
-			if( (G > 0 && P > 0 && S > 0 && M > 0 && C > 0 )
-				&& ( M % 2 == 0 )
-			)  {}
-			else { 
-				System.out.println("***Please Notice the Following Points: ***");
-				System.out.println("***1. Please Enter all positive Integer***");
-				System.out.println("***2. The Total number of Modules must be an EVEN***");
-				System.out.println("***3. The Total number of Modules SHOULD ALWAYS GRETER OR EQUAL TO The number of Modules in a Course***\n");
-				ParameterGetter.getUserInput(); 
-			}
 			in.close();
 		}
 	}
@@ -102,7 +104,7 @@ class GenerateData{
 	private int M_TotalModules;
 	private int C_inCourseModules;
 	private int D_ExamDays;				
-	private int numOfSessionEachDay = 2 ;
+	private int numOfSessionEachDay = 2;
 	
 	private int [][] StuTimetable;		// The first record from index ZERO 0 rather than 1 !
 	private int [][][] ExamTimetable;		
@@ -115,7 +117,7 @@ class GenerateData{
 		S_StudentNum		= S;
 		M_TotalModules		= M;
 		C_inCourseModules	= C;
-		D_ExamDays 		= M_TotalModules / numOfSessionEachDay;
+		D_ExamDays 			= M_TotalModules / numOfSessionEachDay;
 	
 		generate_StuTimetable();
 
@@ -207,43 +209,45 @@ class GenerateData{
 
 class Fx_fitness{ 
 
-	private static Set<Integer> overlappingStuName_Set = new HashSet<Integer>(); 
+	//private static Set<Integer> overlappingStuName_Set = new HashSet<Integer>(); 
 	
 	public static int[] calculate(int[][] stuTimetable, int [][][] ExamTimetable){
 
 		int P_PopulationSize	= ExamTimetable.length;
 		int SessionNumEachDay	= ExamTimetable[0].length;
 		int D_ExamDays			= ExamTimetable[0][0].length;
-		int []overlappingScoreList = new int[ P_PopulationSize ]  ;
+		int []FxCostList 		= new int[ P_PopulationSize ]  ;
 		
 		for(int p = 0 ; p < P_PopulationSize ; p++){
 			
-			//int overlappingStuNum_Today = 0;
+			Set<Integer> thisPopulation_overlappingStuName_Set = new HashSet<Integer>(); 
+			
 			for(int day = 0 ; day < D_ExamDays; day++){
+				
+				Set<Integer> today_overlappingStuName_Set = new HashSet<Integer>();	// potential name list	
 				
 				for(int session = 0 ; session < SessionNumEachDay ; session++){
 					int ExamCode = ExamTimetable[p][session][day];
-					checkOverlapStuNameList_withExamCode(ExamCode, stuTimetable, ExamTimetable[p]);
-				}
+					// hashSet variable is passed by here.
+					checkOverlapStuNameList_withExamCode(ExamCode, stuTimetable, ExamTimetable[p],today_overlappingStuName_Set );
+				}	
 				
-				/*** Statistic overlapping student for this day If THE COST IS CACULATED AS 'THE NUMBER OF OVERLAP EXAM SESSIONS'*/
-				//overlappingStuNum_Today += overlap_StudentNameList.size();
-				//for(Integer studentOnList: overlap_StudentNamelist_Arr)
-				//	overlappingStuName_Set.add(studentOnList);
+				thisPopulation_overlappingStuName_Set.addAll(today_overlappingStuName_Set);
 			}
-			overlappingScoreList[p] = overlappingStuName_Set.size() ;
+			
+			FxCostList [p] = thisPopulation_overlappingStuName_Set.size();		//overlappingScoreList[p] = overlappingStuName_Set.size() ;
 		}
-		return overlappingScoreList;
+		return FxCostList ;
 	}
 
-	private static void checkOverlapStuNameList_withExamCode(int examCode , int[][] stuTimetable, int [][] A_ExamTimetable) {
+	private static void checkOverlapStuNameList_withExamCode(int examCode , int[][] stuTimetable, int [][] A_ExamTimetable, Set<Integer> potentialNameList) {
 		
-		if( overlappingStuName_Set.isEmpty() ){		
+		if( potentialNameList.isEmpty() ){		
 			int studentName = 0;
 			for(int[] A_student : stuTimetable){
 				for( int stuModuleCode : A_student ){
 					if( examCode == stuModuleCode ){
-						overlappingStuName_Set.add( studentName );
+						potentialNameList.add( studentName );
 						break;
 					}
 				}
@@ -251,19 +255,22 @@ class Fx_fitness{
 			}
 		}
 		else{  		
-			for(Iterator<Integer> iterator = overlappingStuName_Set.iterator()
-					; iterator.hasNext(); ){
+			for(Iterator<Integer> iterator = potentialNameList.iterator()
+					; iterator.hasNext()
+					; ) {
 				int candidateStu = iterator.next() ;
 				int [] candidateStu_timetable = stuTimetable[ candidateStu ];
 				boolean isOverlapping = false;
 				
 				for(int i = 0; i < candidateStu_timetable.length ; i++){
-					if( examCode == candidateStu_timetable[i] )
+					if( examCode == candidateStu_timetable[i] ){
 						isOverlapping = true;
+						break;
+					}
 				}
 				
 				if( !isOverlapping )
-					iterator.remove();   		// overlappingStuName_Set.remove( new Integer( candidateStu ) ); //java.util.ConcurrentModificationException
+					iterator.remove();   		
 			}
 		}
 		return;
