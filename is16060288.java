@@ -6,11 +6,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
  
-	// BUG IS IN THE FILE >>>***<<<	
-
+	// BUG IS : 
+	//	M = C+1:   Cost = {0 or S}
 
 public class is16060288{
-	public static void main(Str1ng []args){
+	public static void main(String []args){
 		ParameterGetter.getUserInput();
 		new GenerateData(	ParameterGetter.get_G(),
 							ParameterGetter.get_P(), 
@@ -68,8 +68,10 @@ class ParameterGetter{
 				&& ( M % 2 == 0 )
 			)  {}
 			else { 
-				System.out.println("***Please Enter all positive Integer***");
-				System.out.println("***The Total number of Modules must be an EVEN***\n");
+				System.out.println("***Please Notice the Following Points: ***");
+				System.out.println("***1. Please Enter all positive Integer***");
+				System.out.println("***2. The Total number of Modules must be an EVEN***");
+				System.out.println("***3. The Total number of Modules SHOULD ALWAYS GRETER OR EQUAL TO The number of Modules in a Course***\n");
 				ParameterGetter.getUserInput(); 
 			}
 			in.close();
@@ -100,7 +102,7 @@ class GenerateData{
 	private int M_TotalModules;
 	private int C_inCourseModules;
 	private int D_ExamDays;				
-	private int numOfSessionEachDay = D_ExamDays;
+	private int numOfSessionEachDay = 2 ;
 	
 	private int [][] StuTimetable;		// The first record from index ZERO 0 rather than 1 !
 	private int [][][] ExamTimetable;		
@@ -113,7 +115,7 @@ class GenerateData{
 		S_StudentNum		= S;
 		M_TotalModules		= M;
 		C_inCourseModules	= C;
-		D_ExamDays 			= M_TotalModules / numOfSessionEachDay;
+		D_ExamDays 		= M_TotalModules / numOfSessionEachDay;
 	
 		generate_StuTimetable();
 
