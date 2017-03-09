@@ -20,7 +20,7 @@ public class is16060288{
 							ParameterGetter.get_M(), 
 							ParameterGetter.get_C() 
 							)
-							.outFile("AI17.txt"); 
+		/*					.outFile("AI17.txt"); 
 		try{
 			System.out.println();
 			File file = new File("AI17.txt");
@@ -32,7 +32,7 @@ public class is16060288{
 		catch(Exception e){
 			
 		}
-		
+		*/
 	}
 }
 
