@@ -1,15 +1,12 @@
 /**
  * @author 	   :	ZHIKANG TIAN 
  * @student ID :	16060288
- * 
  
- 
- * Calcute the number of student who have overlapping.(No Duplicated.)
- 
- *
+ Number of overlapping rather than the number of student who have overlapping.
  * */
 
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Scanner;
@@ -26,19 +23,19 @@ public class is16060288{
 							ParameterGetter.get_M(), 
 							ParameterGetter.get_C() 
 							)
-		/*					.outFile("AI17.txt"); 
-		try{
-			System.out.println();
-			File file = new File("AI17.txt");
-			Scanner in = new Scanner(file); 
-			while(in.hasNextLine()){
-				System.out.println(in.nextLine());
-			}
-		}
-		catch(Exception e){
-			
-		}
-		*/
+							.outFile("AI17.txt"); 
+//		try{
+//			System.out.println();
+//			File file = new File("AI17.txt");
+//			Scanner in = new Scanner(file); 
+//			while(in.hasNextLine()){
+//				System.out.println(in.nextLine());
+//			}
+//		}
+//		catch(Exception e){
+//			
+//		}
+		
 	}
 }
 
@@ -125,7 +122,7 @@ class GenerateData{
 		C_inCourseModules	= C;
 		D_ExamDays 			= M_TotalModules / numOfSessionEachDay;
 	
-		// Three Big Area
+		// Three parts for this algo.
 		
 		generate_StuTimetable();
 		
@@ -220,28 +217,32 @@ class Fx_fitness{
 		int []FxCostList 		= new int[ P_PopulationSize ]  ;
 		
 		for(int p = 0 ; p < P_PopulationSize ; p++){
-			Set<Integer> thisPopulation_overlappingStuName_Set = new HashSet<Integer>(); 
-			
+			//Set<Integer> thisPopulation_overlappingStuName_Set = new HashSet<Integer>(); 
+			int thisPopulation_overlapping_Num = 0;
 			for(int day = 0 ; day < D_ExamDays; day++){
-				
-				Set<Integer> today_overlappingStuName_Set = new HashSet<Integer>();	// potential name list, but just for one day .	
+				ArrayList<Integer> today_overlappingStuName_Arr = new ArrayList<Integer>();	 // potential name list, but just for one day .
+				//Set<Integer> today_overlappingStuName_Set = new HashSet<Integer>();	// potential name list, but just for one day .//	
 				
 				for(int session = 0 ; session < SessionNumEachDay ; session++){
 					int ExamCode = ExamTimetable[p][session][day];
 					// for each module exam , check whether it has overlapping for all student.
-					checkOverlapStuNameList_withExamCode(ExamCode, stuTimetable, ExamTimetable[p],today_overlappingStuName_Set );
+					checkOverlapStuNameList_withExamCode(ExamCode, stuTimetable, ExamTimetable[p],today_overlappingStuName_Arr );
 				}	
-				thisPopulation_overlappingStuName_Set.addAll(today_overlappingStuName_Set);
+				//thisPopulation_overlappingStuName_Set.addAll(today_overlappingStuName_Arr);
+				thisPopulation_overlapping_Num += today_overlappingStuName_Arr.size();
 			}
-			FxCostList [p] = thisPopulation_overlappingStuName_Set.size();	
+			//FxCostList [p] = thisPopulation_overlappingStuName_Set.size();
+			  FxCostList [p] = thisPopulation_overlapping_Num;
 		}
 		return FxCostList ;
 	}
 
-	private static void checkOverlapStuNameList_withExamCode(int examCode , int[][] stuTimetable, int [][] A_ExamTimetable, Set<Integer> potentialNameList) {
+	private static void checkOverlapStuNameList_withExamCode(int examCode , int[][] stuTimetable, int [][] A_ExamTimetable, ArrayList<Integer> potentialNameList) {
 		
 		// 'if' brance is going to generate the potential student name list 
-		if( potentialNameList.isEmpty() ){		
+		if( potentialNameList.isEmpty() 
+			&& 	stuTimetable[0].length != 1 // if each student just have ONE Module: Cost = 0 ! So -> Do not considered in my Algorithm.
+			){		
 			int studentName = 0;
 			for(int[] A_student : stuTimetable){
 				for( int stuModuleCode : A_student ){
