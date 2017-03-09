@@ -1,6 +1,12 @@
 /**
  * @author 	   :	ZHIKANG TIAN 
  * @student ID :	16060288
+ * 
+ 
+ 
+ * Calcute the number of student who have overlapping.(No Duplicated.)
+ 
+ *
  * */
 
 
