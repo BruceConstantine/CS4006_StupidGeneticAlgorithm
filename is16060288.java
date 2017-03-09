@@ -21,6 +21,18 @@ public class is16060288{
 							ParameterGetter.get_C() 
 							)
 							.outFile("AI17.txt"); 
+		try{
+			System.out.println();
+			File file = new File("AI17.txt");
+			Scanner in = new Scanner(file); 
+			while(in.hasNextLine()){
+				System.out.println(in.nextLine());
+			}
+		}
+		catch(Exception e){
+			
+		}
+		
 	}
 }
 
@@ -263,10 +275,7 @@ class Algo{
 	/**
 	 * @describe: 	Used for storing the generated Random number sequence -- in case of duplicated ordering.
 	 * 				A sequence stand for a population ( Ordering ), beacuse the initial sequence are same ordered.
-	 * 				If there is a same generated sequence , that to say, there is a same ordering. That's why using HashSet.
-	 * 				e.g. initial 2D array is  							[  [1, 2], [3, 4] ]  
-	 * 					 And Random Sequence is 2 3 1 1 for example, the element array[0][0] shuold swap with the second one in array, the element array[0][1] swap with the third, and array[1][0] swap with the first (array[0][0] ) and the array[1][1] swap with the first array[0][0]
-	 * 					 the sequence after shuffled should be:			[  [4, 3], [2, 1] ]  
+	 * 				If there is a same generated sequence , that to say, there is a same ordering. That's why using HashSet. 				
 	 */
 	private static HashSet<String> shuffleIndex_generationSequence_Set = new HashSet<String>();	
 		
@@ -295,6 +304,10 @@ class Algo{
 	 * @desciprtion		: shuffle 2d array with shuffle algorithm 
 	 * 						-> foreach element from 0 to n-1: 
 	 * 							generating a random number for the index where it should be swaped.
+	 *				
+	 *					 e.g. initial 2D array is  							[  [1, 2], [3, 4] ]  
+	 * 					 And Random Sequence is: "2,3,1,1" for example, the element array[0][0] shuold swap with the second one in array, the element array[0][1] swap with the third, and array[1][0] swap with the first (array[0][0] ) and the array[1][1] swap with the first array[0][0]
+	 * 					 the sequence after shuffled should be:			[  [4, 3], [2, 1] ]  
 	 */
 	public static int[][] shuffle_2D_Arr( int[][] init_Arr, int colNum, int numOfSessionEachDay ){
 		int rangeBound = colNum * numOfSessionEachDay;
