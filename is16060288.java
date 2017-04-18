@@ -3,7 +3,6 @@
  * @student ID :	16060288
  * */
 
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -20,8 +19,8 @@ public class is16060288{
 							ParameterGetter.get_S(), 
 							ParameterGetter.get_M(), 
 							ParameterGetter.get_C() 
-							)
-							.outFile("AI17.txt"); 
+							);
+		 
 		
 	}
 }
@@ -100,6 +99,7 @@ class GenerateData{
 	private int [][] StuTimetable;		// The first record from index ZERO 0 rather than 1 !
 	private int [][][] ExamTimetable;									
 	private int [] costFxResult_Arr;
+	private ArrayList<Ordering> Population;
 		
 	GenerateData(int G, int P, int S, int M, int C){
 		G_GenetaionsNum		= G;
@@ -108,14 +108,20 @@ class GenerateData{
 		M_TotalModules		= M;
 		C_inCourseModules	= C;
 		D_ExamDays 			= M_TotalModules / numOfSessionEachDay;
-	
-		// Three parts for this algo.
+		Population = new ArrayList<Ordering>();
 		
+		//Init 
 		generate_StuTimetable();
 		
 		generate_ExamTimetable(numOfSessionEachDay);	
 		
 		costFxResult_Arr = Fx_fitness.calculate(StuTimetable, ExamTimetable);
+		//End Init
+		
+		init_Population();
+		
+		generateOptimalPopulation();
+		outputToConsole();
 	}
 	
 	// output result from memory(array) to disk(file)
@@ -192,8 +198,177 @@ class GenerateData{
 		}
 		 
 	}
+  
+  
+	private void init_Population(){
+		for(int i = 0 ; i < P_PopulationSize; i++){
+			Population.add(
+				new Ordering( costFxResult_Arr[i], ExamTimetable[i] )
+			);
+		}	
+		Population.trimToSize();
+	}
+	
+	private void generateOptimalPopulation(){
+		for(int count = 0; count < G_GenetaionsNum; count++){
+			geneticAlgo.natureSelection(Population);
+			geneticAlgo.geneticSelection(Population);
+			 
+		}
+	}
+	
+	private void outputToConsole(){
+		  		
+/* 		for(int i = 0 ; i < Population.size(); i++){
+			Ordering individual = Population.get(i);
+			for(int j = 0 ; j < individual.size(); j++){
+				for(int k = 0 ; k < individual.session(); k++){
+					System.out.print(individual.get(i,j)+" ");	
+				}
+				System.out.println();
+			}
+			System.out.println();
+		}
+	} */
+	
+	//output cost
+		for(int i = 0 ; i < Population.size(); i++){
+			Ordering individual = Population.get(i); 
+			System.out.print( individual.getCost() );  
+			System.out.println( "\n count = " + Population.size());
+		}
+	}
+	
  
 }
+
+class Ordering {
+	
+	private int cost;	
+	private int [][] StuTimetable;
+	private int size;
+	private int session = 2;
+	
+	public Ordering(int cost, int [][] StuTimetable){
+		this.cost = cost;
+		this.StuTimetable = StuTimetable ;
+		this.size = StuTimetable.length; 
+	}
+	
+	public int size(){
+		return size;
+	}
+	
+	public int session(){
+		return session;
+	}
+	
+	public int getCost(){
+		return this.cost;
+	}
+	
+	public int [][] getStuTimetable(){
+		return this.StuTimetable;
+	}
+	
+	public int[] getSession(int session_in){
+		if(session_in == 0 || session_in == 1 )
+			return StuTimetable[session_in];
+		else
+			return null;
+	}
+	
+	public int get(int i, int j){ 
+		return StuTimetable[i][j];
+	}
+	 
+}
+
+class geneticAlgo{
+		public static void natureSelection(ArrayList<Ordering> Population){
+			int size = Population.size();
+			Population = sortByCost( Population , 0 , size - 1);
+			
+			int eachGroupNum = size / 3;
+			
+			if( size % 3 == 0){
+				removeWorstGroup(Population, eachGroupNum, 2 * eachGroupNum);
+			}
+			else if( size % 3 == 1){ // put the one in the middle group  
+				removeWorstGroup(Population, eachGroupNum, 2 * eachGroupNum + 1);
+			}
+			else{ // separe each one into the best one and the worest one
+				removeWorstGroup(Population, eachGroupNum, 2 * eachGroupNum + 1);
+			}
+		}
+		private static void copyWellbredGene( ArrayList<Ordering> Population, int copyStartIndex, int TargetIndex){
+			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		}
+		
+		private static void removeWorstGroup( ArrayList<Ordering> Population, int worstGroupLength, int startIndexForWorst ){
+			int count = 1;
+			while( count <= worstGroupLength){					// remove eachGroupNum times
+				Population.remove(startIndexForWorst); 	// notice that 2*eachGroupNum+1 is the first element of the worst group : the middle group has one more
+				count++;
+			}
+		}
+		
+		public static void geneticSelection(ArrayList<Ordering> Population){
+			 double dice = Math.random();
+			 if( dice < 0.80 ){ 		//80%
+				 reproduction(Population);
+			 }
+			 else if( dice > 0.95){		//5%
+				 mutation(Population);
+			 }
+			 else{						//15%
+				 crossover(Population);
+			 }
+		}
+		
+		public static void reproduction(ArrayList<Ordering> Population){
+			 
+		}
+		
+		public static void mutation(ArrayList<Ordering> Population){
+			 
+		}
+		
+		public static void crossover(ArrayList<Ordering> Population){
+			 
+		} 
+		
+		private static ArrayList<Ordering> sortByCost(ArrayList<Ordering> Population, int start, int end){
+			if (start < end){   
+				Ordering base = Population.get(start);    
+				Ordering temp;  
+				int i = start, j = end;   
+				do{
+					while ((Population.get(i).getCost() < base.getCost()) && (i < end))   
+						i++;   
+					while ((Population.get(j).getCost() > base.getCost()) && (j > start))   
+						j--;   
+					if (i <= j) {   
+						temp = Population.get(i);   
+						Population.set(i,Population.get(j));   
+						Population.set(j,temp);   
+						i++;   
+						j--;   
+					}   
+				}while (i <= j);   
+				if (start < j)   
+					sortByCost(Population, start, j);   
+				if (end > i)   
+					sortByCost(Population, i, end);   
+			}
+			return Population;
+		}
+ }
+
+
+
+
+
 
 class Fx_fitness{ 
 	public static int[] calculate(int[][] stuTimetable, int [][][] ExamTimetable){
@@ -261,7 +436,7 @@ class Fx_fitness{
 	
 }
 
-class Algo{
+class Algo{  
 	/**
 	 * @describe: 	Used for storing the generated Random number sequence -- in case of duplicated ordering.
 	 * 				A sequence stand for a population ( Ordering ), beacuse the initial sequence are same ordered.
