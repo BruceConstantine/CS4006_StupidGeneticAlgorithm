@@ -81,13 +81,20 @@ class ParameterGetter{
 
 class Ordering {
 	private int cost;	
-	private int [][] ording_timetable;
+	private int [][] ordering_timetable;
 	private int size;
 	private int session = 2;
 	
+	public Ordering(Ordering ordering){
+		this.cost = ordering.getCost();
+		this.size = ordering.size();
+		this.ordering_timetable = ordering.getOrding_timetable();
+		this.session = 2;
+	}
+	
 	public Ordering(int cost, int [][] ording_timetable){
 		this.cost = cost;
-		this.ording_timetable = ording_timetable ;
+		this.ordering_timetable = ording_timetable ;
 		this.size = ording_timetable[0].length; 
 	}
 	
@@ -108,22 +115,22 @@ class Ordering {
 	}
 
 	public int [][] getOrding_timetable(){
-		return this.ording_timetable;
+		return this.ordering_timetable;
 	}
 	
 	public void setOrding_timetable( int[][] ording_timetable ){
-		this.ording_timetable = ording_timetable;
+		this.ordering_timetable = ording_timetable;
 	}
 	
 	public int[] getSession(int session_in){
 		if(session_in == 0 || session_in == 1 )
-			return ording_timetable[session_in];
+			return ordering_timetable[session_in];
 		else
 			return null;
 	}
 	
 	public int get(int i, int j){ 
-		return ording_timetable[i][j];
+		return ordering_timetable[i][j];
 	}
 }
 
@@ -139,7 +146,7 @@ class GenerateData{
 	private int [][] StuTimetable;		// The first record from index ZERO 0 rather than 1 !
 	private int [][][] ExamTimetable;									
 	private int [] costFxResult_Arr;
-	private ArrayList<Ordering> Population;
+	private Ordering [] Population;
 		
 	GenerateData(int G, int P, int S, int M, int C){
 		G_GenetaionsNum		= G;
@@ -148,7 +155,7 @@ class GenerateData{
 		M_TotalModules		= M;
 		C_inCourseModules	= C;
 		D_ExamDays 			= M_TotalModules / numOfSessionEachDay;
-		Population = new ArrayList<Ordering>();
+		Population 			= new Ordering[P_PopulationSize];
 		
 		//Init 
 		generate_StuTimetable();
@@ -191,18 +198,16 @@ class GenerateData{
 	
 	private void init_Population(){
 		for(int i = 0 ; i < P_PopulationSize; i++){
-			Population.add(
-				new Ordering( costFxResult_Arr[i], ExamTimetable[i] )
-			);
-		}	 
-		Population.trimToSize();
+			Population[i] = new Ordering( costFxResult_Arr[i], ExamTimetable[i] );
+		}
 	}
 	
 	private void generateOptimalPopulation(int [][] StuTimetable){
+		GeneticAlgo genAlgo = new GeneticAlgo();
 		for(int count = 0; count < G_GenetaionsNum; count++){
-			geneticAlgo.natureSelection(Population);
-			geneticAlgo.geneticEvolution(Population);
-			Fx_fitness.calculate(Population,StuTimetable);
+			genAlgo.natureSelection(Population);
+			genAlgo.geneticEvolution(Population);
+			Fx_fitness.calculate(StuTimetable, Population);
 			outputToConsole();
 		}
 	}
@@ -217,9 +222,9 @@ class GenerateData{
 			System.out.println();
 		}
 		 
-		System.out.println("\n*******Population size:"+Population.size() +"********");
- 		for(int i = 0 ; i < Population.size(); i++){
-			Ordering individual = Population.get(i);
+		System.out.println("\n*******Population size:"+Population.length +"********");
+ 		for(int i = 0 ; i < Population.length; i++){
+			Ordering individual = Population[i];
 			System.out.println("Ord "+ i +":\t");
 			for(int j = 0 ; j < individual.session(); j++){
 				for(int k = 0 ; k < individual.size(); k++){
@@ -232,9 +237,9 @@ class GenerateData{
 	}  
 }
  
-class geneticAlgo{
-		public static void natureSelection(ArrayList<Ordering> Population){
-			int size = Population.size();
+class GeneticAlgo{
+		public void natureSelection(Ordering [] Population){
+			int size = Population.length;
 			Population = sortByCost( Population , 0 , size - 1 ); // quick sort in populartion size : [0,size)
 			
 			int eachGroupNum = size / 3; 
@@ -249,31 +254,28 @@ class geneticAlgo{
 			}
 		}
 		
-		private static void weedOutWorstGene ( ArrayList<Ordering> Population, int worstGroupLength, int startIndexForWorst ){
+		private void weedOutWorstGene ( Ordering[] Population, int worstGroupLength, int startIndexForWorst ){
 			int count = 1;
 			while( count <= worstGroupLength){				// remove eachGroupNum times
-				Population.remove(startIndexForWorst); 		// notice that 2*eachGroupNum+1 is the first element of the worst group : the middle group has one more
+				//invoke deep copy
+				Population[startIndexForWorst++] = new Ordering(Population[count-1]); 		// notice that 2*eachGroupNum+1 is the first element of the worst group : the middle group has one more
 				count++;
 			} 												// elimanate the worst gene
-			Population.addAll(Population.subList(0 , worstGroupLength));	//copy the best gene into this population
+			//Population.addAll(Population.subList(0 , worstGroupLength));	//copy the best gene into this population
 		}
 		
-		public static void geneticEvolution(ArrayList<Ordering> Population){
-			int size = Population.size(); 
+		public void geneticEvolution( Ordering[] Population){
+			int size = Population.length; 
 			for(int i = 0; i < size; ){
 				double dice = Math.random();
 				 if( dice < 0.80 ){ 		//80%
-//					 reproduction( Population.get(i) );
+//					 reproduction( Population[i] );
 //					 do nothing
-					 i++;
-				 }
-				 else if( dice > 0.95){		//5% 
-					 mutation( Population, i );
-					 System.out.println("i = "+i+" MUTATION!!!!");
+					 System.out.println("i = "+i+" PRRRRRRRR!!!!");
 					 i++;
 						if(i>1)  {
-							System.out.println("-------------Start-------------------------");
-							Ordering individual = Population.get(i-2);
+							System.out.println("-------------PRRRRRRRR-------------------------");
+							Ordering individual = Population[i-2];
 							System.out.println("Ord "+ (i-2) +":\t");
 							for(int j = 0 ; j < individual.session(); j++){
 								for(int k = 0 ; k < individual.size(); k++){
@@ -283,7 +285,7 @@ class geneticAlgo{
 							}
 							System.out.println( "cost = " + individual.getCost()+ "\n");  
 
-							individual = Population.get(i-1);
+							individual = Population[i-1];
 							System.out.println("Ord "+ (i-1) +":\t");
 							for(int j = 0 ; j < individual.session(); j++){
 								for(int k = 0 ; k < individual.size(); k++){
@@ -293,7 +295,48 @@ class geneticAlgo{
 							}
 							System.out.println( "cost = " + individual.getCost()+ "\n"); 
 							if(i!=8){
-								individual = Population.get(i);
+								individual = Population[i];
+								System.out.println("Ord "+ (i) +":\t");
+								for(int j = 0 ; j < individual.session(); j++){
+									for(int k = 0 ; k < individual.size(); k++){
+										System.out.print(" m" + individual.get(j,k)+" ");	
+									}
+									System.out.println();
+								}
+								System.out.println( "cost = " + individual.getCost()+ "\n");  
+							}
+							System.out.println("--------------PRRRRRRRR------------------------");
+							
+						}
+					 i++;
+				 }
+				 else if( dice > 0.95){		//5% 
+					 mutation( Population, i );
+					 System.out.println("i = "+i+" MUTATION!!!!");
+					 i++;
+						if(i>1)  {
+							System.out.println("-------------Start-------------------------");
+							Ordering individual = Population[i-2];
+							System.out.println("Ord "+ (i-2) +":\t");
+							for(int j = 0 ; j < individual.session(); j++){
+								for(int k = 0 ; k < individual.size(); k++){
+									System.out.print(" m" + individual.get(j,k)+" ");	
+								}
+								System.out.println();
+							}
+							System.out.println( "cost = " + individual.getCost()+ "\n");  
+
+							individual = Population[i-1];
+							System.out.println("Ord "+ (i-1) +":\t");
+							for(int j = 0 ; j < individual.session(); j++){
+								for(int k = 0 ; k < individual.size(); k++){
+									System.out.print(" m" + individual.get(j,k)+" ");	
+								}
+								System.out.println();
+							}
+							System.out.println( "cost = " + individual.getCost()+ "\n"); 
+							if(i!=8){
+								individual = Population[i];
 								System.out.println("Ord "+ (i) +":\t");
 								for(int j = 0 ; j < individual.session(); j++){
 									for(int k = 0 ; k < individual.size(); k++){
@@ -310,11 +353,48 @@ class geneticAlgo{
 				 }
 				 else{						//15%
 					 if( i != size - 1){	//if it is not the last one
-						 crossover( Population.get(i) , Population.get(i+1) );
+						 crossover( Population[i].getOrding_timetable() , Population[i+1].getOrding_timetable() );
+						 System.out.println("i = "+i+" CCCCCCCCCC!!!!");
+						 i++;
+							if(i>1)  {
+								System.out.println("-------------CCCCCCCCCC-------------------------");
+								Ordering individual = Population[i-2];
+								System.out.println("Ord "+ (i-2) +":\t");
+								for(int j = 0 ; j < individual.session(); j++){
+									for(int k = 0 ; k < individual.size(); k++){
+										System.out.print(" m" + individual.get(j,k)+" ");	
+									}
+									System.out.println();
+								}
+								System.out.println( "cost = " + individual.getCost()+ "\n");  
+
+								individual = Population[i-1];
+								System.out.println("Ord "+ (i-1) +":\t");
+								for(int j = 0 ; j < individual.session(); j++){
+									for(int k = 0 ; k < individual.size(); k++){
+										System.out.print(" m" + individual.get(j,k)+" ");	
+									}
+									System.out.println();
+								}
+								System.out.println( "cost = " + individual.getCost()+ "\n"); 
+								if(i!=8){
+									individual = Population[i];
+									System.out.println("Ord "+ (i) +":\t");
+									for(int j = 0 ; j < individual.session(); j++){
+										for(int k = 0 ; k < individual.size(); k++){
+											System.out.print(" m" + individual.get(j,k)+" ");	
+										}
+										System.out.println();
+									}
+									System.out.println( "cost = " + individual.getCost()+ "\n");  
+								}
+								System.out.println("--------------PRRRRRRRR------------------------");
+								
 						 i += 2;					 
 					 }
 				 }
-			}
+				 }
+				 }
 			
 		}
 		
@@ -323,40 +403,111 @@ class geneticAlgo{
 //		}
 		
 		//..未测试的代码
-		public static void mutation( ArrayList< Ordering > Population, int index ){
+		public void mutation( Ordering [] Population, int index ){
 			 
-			 int [][] orderingTimetable = Population.get(index).getOrding_timetable();
+			 int [][] orderingTimetable = Population[index].getOrding_timetable() ;
+			 int new2Darr [][] = new int [ orderingTimetable.length ][orderingTimetable[0].length ];
+			 for(int i = 0 ; i < orderingTimetable.length ; i++){
+				 for(int j = 0 ; j < orderingTimetable[0].length ; j++){
+					 new2Darr[i][j] = orderingTimetable[i][j];
+				 }	 
+			 }
 			 int days = orderingTimetable[0].length; 
 			 int index_pair[] = new int[2];
 			 index_pair = Algo.generateTwoDiffInt(index_pair,days);
 			 int row1 = index_pair[0]/days, col1 = index_pair[0]%days;
 			 int row2 = index_pair[1]/days, col2 = index_pair[1]%days;
-			 int temp = orderingTimetable[row1][col1];
-			 orderingTimetable[row1][col1] = orderingTimetable[row2][col2];
-			 orderingTimetable[row2][col2] = temp;
-			 //ordering.setOrding_timetable( orderingTimetable );
+			 int temp = new2Darr[row1][col1];
+			 new2Darr[row1][col1] = new2Darr[row2][col2];
+			 new2Darr[row2][col2] = temp;
+			 Population[index].setOrding_timetable( new2Darr );
 			 System.out.print("a="+index_pair[0]+" b="+index_pair[1]+"\n");
 		}
 
-		//..未测试的代码
-		public static void crossover(Ordering ordering1 , Ordering ordering2 ){
-			 
+		public void crossover(int [][] arrCut, int [][] arrAnother){
+			int size = arrCut[0].length;
+			int session = arrCut.length;
+			// get cut point
+			int cp = (int)( Math.random()*(2*size - 4) + 2 ) ;
+			int cp_row = cp/size;
+			int cp_col = cp%size;
+			//swap each element from the very last element to the cut point 
+			int i ;
+			if(cp_row == 0){
+				i = 1;
+			}
+			else{			//
+				i= 0;
+			}	 
+			for(; i >= 0 ;i--){
+				int cutEnd = 0;
+				if(i == 0)
+					cutEnd = cp_col;
+				for( int j = size - 1 ;j >= cutEnd ;j--){
+					int temp			= 	arrCut[ cp_row + i ][j];
+					arrCut[ cp_row + i  ][j] 	= 	arrAnother[cp_row +i][j];
+					arrAnother[cp_row +i][j] 	= 	temp;	
+				}
+			}
+			elimenateRepeatModule(arrCut);
+			elimenateRepeatModule(arrAnother);
+
 		}
 		
-		private static ArrayList<Ordering> sortByCost(ArrayList<Ordering> Population, int start, int end){
+		private void elimenateRepeatModule(int[][] odering){
+			int session = odering.length;
+			int size = odering[0].length;
+			
+			//two dimention for statistic of every number : purpose to find the duplicated & missed number
+			int [] statisticForModule = new int [session * size + 1];	// initally all element are 0
+			ArrayList<Integer> moduleMissed = new ArrayList<Integer>();
+			ArrayList<Integer> moduleRepeat = new ArrayList<Integer>();
+			for(int [] row: odering){
+				for(int module : row){
+					statisticForModule[module]++;
+				}
+			}
+			
+			// find the missed module and the repeat module , add them into arraylist
+			for(int module = 1; module < statisticForModule.length; module++){
+				if(statisticForModule[module] == 0){			// missed number
+					moduleMissed.add(module);
+				}
+				else if(statisticForModule[module] == 1){}		// do nothing
+				else{											// duplicated number
+					moduleRepeat.add(module);
+				}
+			}
+			
+			//*elimanet and replace*//
+			//from the first module in ordering, check the repeated module which is not crossed over from the other ordering , and replaced with missed module.
+			for( int ses = 0; ses < session; ses++){
+				for( int module = 0 ;module < size; module++){
+					for(Iterator<Integer>iterator = moduleRepeat.iterator(); iterator.hasNext();)
+					if(odering[ses][module] == iterator.next()){ // 
+						iterator.remove(); 
+						int missedModule_index = (int)(Math.random() * moduleMissed.size());
+						odering[ses][module] = moduleMissed.get(missedModule_index);
+						moduleMissed.remove(missedModule_index);
+					}
+				}
+			}
+		}
+		
+		private Ordering[] sortByCost(Ordering [] Population, int start, int end){
 			if (start < end){   
-				Ordering base = Population.get(start);    
+				Ordering base = Population[start];    
 				Ordering temp;  
 				int i = start, j = end;   
 				do{
-					while ((Population.get(i).getCost() < base.getCost()) && (i < end))   
+					while ((Population[i].getCost() < base.getCost()) && (i < end))   
 						i++;   
-					while ((Population.get(j).getCost() > base.getCost()) && (j > start))   
+					while ((Population[j].getCost() > base.getCost()) && (j > start))   
 						j--;   
 					if (i <= j) {   
-						temp = Population.get(i);   
-						Population.set(i,Population.get(j));   
-						Population.set(j,temp);   
+						temp = Population[i];   
+						Population[i] = Population[j];   
+						Population[j] = temp ;   
 						i++;   
 						j--;   
 					}   
@@ -394,16 +545,16 @@ class Fx_fitness{
 	}
 
 	//..未测试的代码
-	public static void calculate(ArrayList<Ordering> Population, int[][] stuTimetable){
-		Ordering ordering = Population.get(0);
-		int P_PopulationSize	= Population.size();
+	public static void calculate(int[][] stuTimetable, Ordering[] Population ){
+		Ordering ordering = Population[0];
+		int P_PopulationSize	= Population.length;
 		int SessionNumEachDay	= ordering.session();
 		int D_ExamDays			= ordering.size();
 		int [][][]ExamTimetable = new int[P_PopulationSize][SessionNumEachDay][D_ExamDays];
 		int []FxCostList 		= new int[ P_PopulationSize ];
 		
 		for(int i = 0; i < P_PopulationSize; i++){
-			ExamTimetable[i] = Population.get(i).getOrding_timetable();
+			ExamTimetable[i] = Population[i].getOrding_timetable();
 		}
 		
 		for(int p = 0 ; p < P_PopulationSize ; p++){
@@ -421,7 +572,7 @@ class Fx_fitness{
 		}
 		
 		for(int i = 0; i < P_PopulationSize ; i++){
-			Population.get(i).setCost(FxCostList[i]);
+			Population[i].setCost(FxCostList[i]);
 			System.out.println(FxCostList[i]);
 		}
 	}
