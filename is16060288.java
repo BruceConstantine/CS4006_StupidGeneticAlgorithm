@@ -19,8 +19,12 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Scanner;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
- 
+
+// in-term code
 public class is16060288{
 	public static void main(String []args){
 		ParameterGetter.getUserInput();
@@ -30,9 +34,11 @@ public class is16060288{
 							ParameterGetter.get_M(), 
 							ParameterGetter.get_C() 
 							);
+		System.out.println("If you want to see the details procedure for Cost Change, Please check file'ChangeOfCost.txt' ");
 	}
 }
 
+// in-term code
 class ParameterGetter{
 	private static int G, P, S, M, C ;
 	
@@ -169,20 +175,25 @@ class GenerateData{
 		generate_ExamTimetable(numOfSessionEachDay);	 
 		costFxResult_Arr = Fx_fitness.calculate(StuTimetable, ExamTimetable);
 		//End Init 
-		
+/*********************** FINAL SUBMISSION ************************/
 		init_Population(); // initialisation of population 
 		generateOptimalPopulation(StuTimetable); // calculate from generation 0  
+		
 		outputStudentTimetbale();
-		outputPopulationToConsole();
+		System.out.println("\n \n The last generation is as following:");
+		outputPopulationToConsole();	//output the last generation
+/********************* END FINAL SUBMISSION ***********************/ //all codes are in the methods/class between comments.
 	}
-	
+
+	// in-term code
 	private void generate_StuTimetable(){
 		StuTimetable = new int[S_StudentNum][C_inCourseModules];
 		for( int i = 0; i < StuTimetable.length; i++){
 			StuTimetable[i] = Algo.generate_AStuTimeTable(new int[ C_inCourseModules ],  C_inCourseModules, M_TotalModules ) ;
 		}
 	}
-	
+
+	// in-term code
 	private void generate_ExamTimetable(int numOfSessionEachDay){
 		ExamTimetable = new int[P_PopulationSize][numOfSessionEachDay][ D_ExamDays ];
 		/* * Initalize each ordering with timetable template 
@@ -209,10 +220,22 @@ class GenerateData{
 	
 	private void generateOptimalPopulation(int [][] StuTimetable){
 		GeneticAlgo genAlgo = new GeneticAlgo();
+		
+		//Declearing  a file which used for Outputing the records of each ordering's cost
+		File file = new File("ChangeOfCost.txt"); 
+		PrintWriter out = null;
+		try {
+			if(! file.exists() ){file.createNewFile();}
+			out = new PrintWriter(file);
+		}
+		catch (Exception e) { e.printStackTrace(); }
+		
+		//Main idea:: for each generation: select the best ordering, and select gene operation(mutation|reproduction|crossover), then calculate all fitness cost , finally output into file.
 		for(int count = 0; count < G_GenetaionsNum; count++){
 			genAlgo.natureSelection(Population);
 			genAlgo.geneticEvolution(Population);
 			Fx_fitness.calculate(StuTimetable, Population);
+			outputCostAll(out, Population);
 		}
 	}
 	
@@ -231,7 +254,7 @@ class GenerateData{
 		System.out.println("\n*******Population size:"+Population.length +"********");
  		for(int i = 0 ; i < Population.length; i++){
 			Ordering individual = Population[i];
-			System.out.println("Ord "+ i +":\t");
+			System.out.println("Ord "+ (i+1) +":\t");
 			for(int j = 0 ; j < individual.session(); j++){
 				for(int k = 0 ; k < individual.size(); k++){
 					System.out.print(" m" + individual.get(j,k)+" ");	
@@ -241,6 +264,13 @@ class GenerateData{
 			System.out.println( "cost = " + individual.getCost()+ "\n"); 
 		}
 	}  
+	
+	private void outputCostAll(PrintWriter out , Ordering[] Population) {
+		for(Ordering eachOrdering: Population){
+			out.println( eachOrdering.getCost() );
+		}
+		out.flush();
+	}
 }
  
 class GeneticAlgo{
@@ -257,8 +287,11 @@ class GeneticAlgo{
 			else{ // separe each one into the best one and the worest one
 				weedOutWorstGene(Population, eachGroupNum + 1 , 2 * eachGroupNum + 1);
 			}
+			shuffleOrdering(Population);	// shuffle all orderings in order to randomly pick two oderings select.(rather than select the adjacent two odering) 
+			
 		}
 		
+		//elimanate all the bads ordering and replaced with good orderings
 		private void weedOutWorstGene ( Ordering[] Population, int worstGroupLength, int startIndexForWorst ){
 			int indexForBest = 0;
 			while( indexForBest < worstGroupLength){				// remove eachGroupNum times
@@ -268,6 +301,18 @@ class GeneticAlgo{
 			}
 		}
 		
+		//randomly shuffle all ordering for Population
+		private void shuffleOrdering( Ordering[] Population ){
+			int size = Population.length;
+			for(int i = 0 ; i < size; i++){
+				int index_temp = (int)(Math.random() * size);
+				Ordering order_temp 	= 	Population[index_temp];
+				Population[index_temp] 	= 	Population[i];
+				Population[i] 			= 	order_temp;
+			}
+		}
+		
+		// select 1 of 3 posibilities for gene operations
 		public void geneticEvolution( Ordering[] Population){
 			int size = Population.length; 
 			for(int i = 0; i < size; ){
@@ -277,13 +322,11 @@ class GeneticAlgo{
 				 }
 				 else if( dice > 0.95){		//5% 
 					 mutation( Population, i );
-//					 System.out.println("i = "+i+" MUTATION!!!!");
 					 i++; 
 				 }
 				 else{						//15%
 					 if( i != size - 1){	//if it is not the last one
 						 crossover( Population[i].getOrding_timetable() , Population[i+1].getOrding_timetable() );
-//						 System.out.println("i = "+i+" Crossover!!!");
 						 i += 2;					 
 					 }
 				 }
@@ -300,7 +343,7 @@ class GeneticAlgo{
 			 }
 			 int days = orderingTimetable[0].length; 
 			 int index_pair[] = new int[2];
-			 index_pair = Algo.generateTwoDiffInt(index_pair,days);
+			 index_pair = Algo.generateTwoDiffInt(index_pair,days);		//return two unequaled integers, which stand for the indexes for mutation 
 			 int row1 = index_pair[0]/days, col1 = index_pair[0]%days;
 			 int row2 = index_pair[1]/days, col2 = index_pair[1]%days;
 			 int temp = new2Darr[row1][col1];
@@ -325,16 +368,18 @@ class GeneticAlgo{
 			}	 
 			for(; i >= 0 ;i--){
 				int cutEnd = 0;
-				if(i == 0)	//if it is cuting the last row, it shuold cut until the cut point . rather than all elements in a row.
+				if(i == 0){	//if it is cuting the last row, it shuold cut until the cut point . rather than all elements in a row.
 					cutEnd = cp_col;
+				}
+				//crossover/swap each elements in two orderings
 				for( int j = size - 1 ;j >= cutEnd ;j--){
 					int temp			= 	arrCut[ cp_row + i ][j];
 					arrCut[ cp_row + i  ][j] 	= 	arrAnother[cp_row +i][j];
 					arrAnother[cp_row +i][j] 	= 	temp;	
 				}
 			}
-			elimenateRepeatModule(arrCut);
-			elimenateRepeatModule(arrAnother);
+			elimenateRepeatModule(arrCut);		//correct all repeated module in the array : arrCut
+			elimenateRepeatModule(arrAnother);	//same as above
 		}
 		
 		private void elimenateRepeatModule(int[][] odering){
@@ -492,6 +537,7 @@ class Fx_fitness{
 	}
 }
 
+// in-term code
 class Algo{  
 	/** in-term code
 	 * @describe: 	Used for storing the generated Random number sequence -- in case of duplicated ordering.
@@ -561,7 +607,7 @@ class Algo{
 	public static int random(int rangeBound){ 
 		return (int)( Math.random() * rangeBound );
 	}	
-	
+	//return two unequaled integers
 	public static int[] generateTwoDiffInt(int[] pair, int range){ 
 		if(pair == null || pair.length < 2 )
 			pair = new int[2];
